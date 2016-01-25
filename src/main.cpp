@@ -1,43 +1,44 @@
 #include <iostream>
 #include <string>
 #include <Dunjun/Common.hpp>
+#include <GL/glew.h>
+#include <OpenGL/glext.h>
+#include <OpenGL/gl.h>
 #include <GLFW/glfw3.h>
-#include <string>
 
-#define global static
+#define GLOBAL static
 #define internal static
-#define local_persist static
+#define LOCAL_PERSIST static
 
-global const int g_windowWidth = 854;
-global const int g_windowHeight = 480;
-global const std::string g_gameTitle = "Dunjun";
+#define float32 float
+#define float64 double
 
-int main(int argc, char ** argv) {
-    GLFWwindow* window;
+GLOBAL const int g_windowWidth = 854;
+GLOBAL const int g_windowHeight = 480;
+GLOBAL const char* g_gameTitle = "Dunjun";
 
-    /* Initialize the Library */
+GLFWwindow *toggleFullScreenWindow(GLFWwindow *window, int key);
 
-    if(!glfwInit()){
-        return EXIT_FAILURE;
-    }
+void setColor(float32 red, float32 blue, float32 green, float32 alpha);
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(g_windowWidth, g_windowHeight, "Dunjun", nullptr, nullptr);
-    if(!window){
-        glfwTerminate();
-        return EXIT_FAILURE;
-    }
+bool toggleExit(GLFWwindow *window, bool isRunning);
 
-    glfwMakeContextCurrent(window);
+GLFWwindow* initialize_window(int width, int height, const char* title);
+
+void init_glew();
+
+int main(int argc, char **argv) {
+
+    init_glew();
+
+    GLFWwindow *window = initialize_window(g_windowWidth, g_windowHeight, g_gameTitle);
 
     bool running = true;
-    bool fullscreen = false;
     /* Loop until the user closes the window */
-    while(running){
+    while (running) {
 
         /* Render here */
-        glClearColor(0.5f, 0.69f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        setColor(0.5f, 0.69f, 1.0f, 1.0f);
 
         /*Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -45,28 +46,79 @@ int main(int argc, char ** argv) {
         /*poll for and process events*/
         glfwPollEvents();
 
-        if(glfwGetKey(window, GLFW_KEY_ESCAPE) ||
-           glfwWindowShouldClose(window)){
-            running = false;
-        }
+        running = toggleExit(window, running);
 
-        if(glfwGetKey(window, GLFW_KEY_F11)){
-            fullscreen = !fullscreen;
-            GLFWwindow* newWindow;
-            if (fullscreen){
-                newWindow = glfwCreateWindow(1440, 900, "Dunjun", glfwGetPrimaryMonitor(),  window);
-            } else {
-                newWindow = glfwCreateWindow(g_windowWidth, g_windowHeight, "Dunjun", nullptr, window);
-            }
-            glfwDestroyWindow(window);
-            window = newWindow;
-            glfwMakeContextCurrent(window);
-
-
-
-        }
+        window = toggleFullScreenWindow(window, GLFW_KEY_F11);
     }
 
     glfwTerminate();
     return EXIT_SUCCESS;
+}
+
+
+
+
+
+
+
+void setColor(float32 red, float32 blue, float32 green, float32 alpha){
+    glClearColor(red, green, blue, alpha);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+bool toggleExit(GLFWwindow *window, bool isRunning) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) ||
+        glfwWindowShouldClose(window)) {
+        isRunning = false;
+    }
+
+    return isRunning;
+}
+
+GLFWwindow* initialize_window(int width, int height, const char* title){
+    if (!glfwInit()) {
+        exit(EXIT_FAILURE);
+    }
+
+    /* Create a windowed mode window and its OpenGL context */
+    GLFWwindow *window = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    if (!window) {
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+
+    glfwMakeContextCurrent(window);
+    return window;
+}
+
+GLFWwindow *toggleFullScreenWindow(GLFWwindow *window, int key) {
+    if (glfwGetKey(window, key)) {
+        LOCAL_PERSIST bool isFullScreen = false;
+        isFullScreen = !isFullScreen;
+
+        GLFWwindow *newWindow;
+        if (isFullScreen) {
+            int count;
+            const GLFWvidmode *modes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+            int monitorHeight = modes[count - 1].height;
+            int monitorWidth = modes[count - 1].width;
+            newWindow = glfwCreateWindow(monitorWidth, monitorHeight, g_gameTitle, glfwGetPrimaryMonitor(), window);
+        } else {
+            newWindow = glfwCreateWindow(g_windowWidth, g_windowHeight, g_gameTitle, nullptr, window);
+        }
+        glfwDestroyWindow(window);
+        glfwMakeContextCurrent(newWindow);
+        return newWindow;
+
+
+    }
+}
+
+void init_glew(){
+    //apple doesn't need this call.
+#ifndef __APPLE__
+    if(!glewInit()){
+        exit(EXIT_FAILURE);
+    }
+#endif
 }

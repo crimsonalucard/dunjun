@@ -10,8 +10,9 @@ add_executable(Dunjun ${SOURCE_FILES} ${EXTRA_LIBS})
 include_directories(include)
 
 find_package(PkgConfig REQUIRED)
+find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
-include_directories(${GLFW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
-target_link_libraries(Dunjun ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+include_directories(${GLFW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS})
+target_link_libraries(Dunjun ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
 
